@@ -2,139 +2,167 @@
 """
 Modeling.py
 
-@author: Soo
+1. 기존 모델 로딩
+2. Fine Tuning
+3. Model Training
+4. Model Evaluation
+5. Save
 """
-
 from tensorflow.keras.models import load_model
-import os
+from tensorflow.keras.layers import Conv2D, MaxPool2D, Flatten, Dropout, Dense, BatchNormalization
+from tensorflow.keras import Sequential
+from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
 
-os.chdir("C:/ITWILL/5_Tensorflow/workspace/AI Interview App/Scripts")
+####################
+# 1. 기존 모델 로딩
+####################
 
-model_original = load_model('files/emotion_model.hdf5', compile=False)
+# 기존 Model Loading : "emotion_model.hdf5" - 경로 주의!
+model_original = load_model('C:/Users/Soo/Documents/GitHub/BigdataGroupProject/files/emotion_model.hdf5', compile=False)
 
-# Original Model Layer Information
+# 기존 Model Layer 확인
 model_original.summary() 
+
+# 새로운 모델에서 사용될 때 가중치 고정
+model_original.trainable = False
+
+
+#################
+# 2. Fine Tuning
+#################
+input_shape=(48, 48, 1)
+
+## 1) 모델 생성
+model = Sequential()
+
+## 2) Layer 추가
 '''
-Model: "model_2"
-__________________________________________________________________________________________________
-Layer (type)                    Output Shape         Param #     Connected to                     
-==================================================================================================
-input_2 (InputLayer)            [(None, 48, 48, 1)]  0                                            
-__________________________________________________________________________________________________
-conv2d_8 (Conv2D)               (None, 46, 46, 8)    72          input_2[0][0]                    
-__________________________________________________________________________________________________
-batch_normalization_15 (BatchNo (None, 46, 46, 8)    32          conv2d_8[0][0]                   
-__________________________________________________________________________________________________
-activation_7 (Activation)       (None, 46, 46, 8)    0           batch_normalization_15[0][0]     
-__________________________________________________________________________________________________
-conv2d_9 (Conv2D)               (None, 44, 44, 8)    576         activation_7[0][0]               
-__________________________________________________________________________________________________
-batch_normalization_16 (BatchNo (None, 44, 44, 8)    32          conv2d_9[0][0]                   
-__________________________________________________________________________________________________
-activation_8 (Activation)       (None, 44, 44, 8)    0           batch_normalization_16[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_9 (SeparableCo (None, 44, 44, 16)   200         activation_8[0][0]               
-__________________________________________________________________________________________________
-batch_normalization_18 (BatchNo (None, 44, 44, 16)   64          separable_conv2d_9[0][0]         
-__________________________________________________________________________________________________
-activation_9 (Activation)       (None, 44, 44, 16)   0           batch_normalization_18[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_10 (SeparableC (None, 44, 44, 16)   400         activation_9[0][0]               
-__________________________________________________________________________________________________
-batch_normalization_19 (BatchNo (None, 44, 44, 16)   64          separable_conv2d_10[0][0]        
-__________________________________________________________________________________________________
-conv2d_10 (Conv2D)              (None, 22, 22, 16)   128         activation_8[0][0]               
-__________________________________________________________________________________________________
-max_pooling2d_5 (MaxPooling2D)  (None, 22, 22, 16)   0           batch_normalization_19[0][0]     
-__________________________________________________________________________________________________
-batch_normalization_17 (BatchNo (None, 22, 22, 16)   64          conv2d_10[0][0]                  
-__________________________________________________________________________________________________
-add_5 (Add)                     (None, 22, 22, 16)   0           max_pooling2d_5[0][0]            
-                                                                 batch_normalization_17[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_11 (SeparableC (None, 22, 22, 32)   656         add_5[0][0]                      
-__________________________________________________________________________________________________
-batch_normalization_21 (BatchNo (None, 22, 22, 32)   128         separable_conv2d_11[0][0]        
-__________________________________________________________________________________________________
-activation_10 (Activation)      (None, 22, 22, 32)   0           batch_normalization_21[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_12 (SeparableC (None, 22, 22, 32)   1312        activation_10[0][0]              
-__________________________________________________________________________________________________
-batch_normalization_22 (BatchNo (None, 22, 22, 32)   128         separable_conv2d_12[0][0]        
-__________________________________________________________________________________________________
-conv2d_11 (Conv2D)              (None, 11, 11, 32)   512         add_5[0][0]                      
-__________________________________________________________________________________________________
-max_pooling2d_6 (MaxPooling2D)  (None, 11, 11, 32)   0           batch_normalization_22[0][0]     
-__________________________________________________________________________________________________
-batch_normalization_20 (BatchNo (None, 11, 11, 32)   128         conv2d_11[0][0]                  
-__________________________________________________________________________________________________
-add_6 (Add)                     (None, 11, 11, 32)   0           max_pooling2d_6[0][0]            
-                                                                 batch_normalization_20[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_13 (SeparableC (None, 11, 11, 64)   2336        add_6[0][0]                      
-__________________________________________________________________________________________________
-batch_normalization_24 (BatchNo (None, 11, 11, 64)   256         separable_conv2d_13[0][0]        
-__________________________________________________________________________________________________
-activation_11 (Activation)      (None, 11, 11, 64)   0           batch_normalization_24[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_14 (SeparableC (None, 11, 11, 64)   4672        activation_11[0][0]              
-__________________________________________________________________________________________________
-batch_normalization_25 (BatchNo (None, 11, 11, 64)   256         separable_conv2d_14[0][0]        
-__________________________________________________________________________________________________
-conv2d_12 (Conv2D)              (None, 6, 6, 64)     2048        add_6[0][0]                      
-__________________________________________________________________________________________________
-max_pooling2d_7 (MaxPooling2D)  (None, 6, 6, 64)     0           batch_normalization_25[0][0]     
-__________________________________________________________________________________________________
-batch_normalization_23 (BatchNo (None, 6, 6, 64)     256         conv2d_12[0][0]                  
-__________________________________________________________________________________________________
-add_7 (Add)                     (None, 6, 6, 64)     0           max_pooling2d_7[0][0]            
-                                                                 batch_normalization_23[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_15 (SeparableC (None, 6, 6, 128)    8768        add_7[0][0]                      
-__________________________________________________________________________________________________
-batch_normalization_27 (BatchNo (None, 6, 6, 128)    512         separable_conv2d_15[0][0]        
-__________________________________________________________________________________________________
-activation_12 (Activation)      (None, 6, 6, 128)    0           batch_normalization_27[0][0]     
-__________________________________________________________________________________________________
-separable_conv2d_16 (SeparableC (None, 6, 6, 128)    17536       activation_12[0][0]              
-__________________________________________________________________________________________________
-batch_normalization_28 (BatchNo (None, 6, 6, 128)    512         separable_conv2d_16[0][0]        
-__________________________________________________________________________________________________
-conv2d_13 (Conv2D)              (None, 3, 3, 128)    8192        add_7[0][0]                      
-__________________________________________________________________________________________________
-max_pooling2d_8 (MaxPooling2D)  (None, 3, 3, 128)    0           batch_normalization_28[0][0]     
-__________________________________________________________________________________________________
-batch_normalization_26 (BatchNo (None, 3, 3, 128)    512         conv2d_13[0][0]                  
-__________________________________________________________________________________________________
-add_8 (Add)                     (None, 3, 3, 128)    0           max_pooling2d_8[0][0]            
-                                                                 batch_normalization_26[0][0]     
-__________________________________________________________________________________________________
-conv2d_14 (Conv2D)              (None, 3, 3, 7)      8071        add_8[0][0]                      
-__________________________________________________________________________________________________
-global_average_pooling2d_2 (Glo (None, 7)            0           conv2d_14[0][0]                  
-__________________________________________________________________________________________________
-predictions (Activation)        (None, 7)            0           global_average_pooling2d_2[0][0] 
-==================================================================================================
-Total params: 58,423
-Trainable params: 56,951
-Non-trainable params: 1,472
-__________________________________________________________________________________________________
+### (1) Convolution Layer_01 
+model.add(Conv2D(52, kernel_size = (6, 6), input_shape=input_shape, activation='relu'))
+model.add(MaxPool2D(pool_size=(3, 3), strides=(1, 1)))
+model.add(Dropout(0.3))
+
+
+### (2) Convolution Layer_02
+model.add(Conv2D(50, kernel_size = (6, 6), activation='relu'))
+model.add(MaxPool2D(pool_size=(3, 3), strides=(1, 1)))
+model.add(Dropout(0.3))
+
+### (3) Batch Normalization
+model.add(Flatten())
 '''
+### (4) emotion_model.hdf5
+model.add(Sequential(model_original))
 
-input = model_original.layers[0].input
-input.shape  # input : (48, 48, 1)
+### (5) Flatten Layer
+model.add(Flatten())
 
-output = model_original.layers[-1].output
-output.shape # output : (7)
+### (6) Fully Connected Layer_01
+model.add(Dense(14, activation = 'relu'))
+
+### (7) Fully Connected Layer_01
+model.add(Dense(21, activation = 'relu'))
+
+### (8) Fully Connected Layer_01
+model.add(Dense(14, activation = 'relu'))
+
+### (9) Fully Connected Layer_02 - output layer
+model.add(Dense(7, activation = 'sigmoid'))
+
+## 3) Model Layer 확인
+model.summary()
 
 
+##############
+# 3. Training
+##############
 
+
+## 1) Model Compile
+model.compile(optimizer=RMSprop(lr=0.0001),
+              loss = 'categorical_crossentropy',
+              metrics=['accuracy'])
+
+
+## 2) Train/Val directory
+train_dir = "C:/Users/Soo/Documents/GitHub/BigdataGroupProject/train_dir"
+val_dir = "C:/Users/Soo/Documents/GitHub/BigdataGroupProject/val_dir"
+
+
+## 3) Preparing Dataset using ImageGenerator
+
+### (1) Training data : 이미지 증식 -> overfitting solution
+train_data = ImageDataGenerator(
+        rescale=1./255,
+        rotation_range = 40, # image 회전 각도 범위(+, - 범위)
+        width_shift_range = 0.2, # image 수평 이동 범위
+        height_shift_range = 0.2, # image 수직 이용 범위  
+        shear_range = 0.2, # image 전단 각도 범위
+        zoom_range=0.2, # image 확대 범위
+        horizontal_flip=True,) # image 수평 뒤집기 범위 
+
+train_generator = train_data.flow_from_directory(
+        train_dir,
+        target_size=(48,48),
+        batch_size=20, 
+        class_mode='categorical')
+
+### (2)) Validation data : 이미지 증식 사용 안 함
+val_data = ImageDataGenerator(rescale=1./255)
+
+validation_generator = val_data.flow_from_directory(
+        val_dir,
+        target_size=(48,48),
+        batch_size=20,
+        class_mode='categorical')
+
+## 4) Model Training
+model_fit = model.fit_generator(
+          train_generator, 
+          steps_per_epoch=100, 
+          epochs=30, # 30 epochs()
+          validation_data=validation_generator,
+          validation_steps=50) 
+
+
+######################
+# 4. Model Evaluation - history 기능 이용
+######################
+
+# 1) loss, acc, val_loss, val_acc 변수 할당
+loss = model_fit.history['loss'] # train
+acc = model_fit.history['accuracy']
+val_loss = model_fit.history['val_loss'] # validation
+val_acc = model_fit.history['val_accuracy']
+
+epochs = range(1, len(acc) + 1)
+
+# 2) Model History Graph : acc vs val_acc   
+plt.plot(epochs, acc, 'bo', label='Training Acc.')
+plt.plot(epochs, val_acc, 'r', label='Validation Acc.')
+plt.title('Training vs Validation Accuracy')
+plt.xlabel('epoch')
+plt.ylabel('Accuracy')
+plt.legend(loc='best')
+plt.show()
+
+# Model History Graph : loss vs val_loss 
+plt.plot(epochs, loss, 'bo', label='Training Loss')
+plt.plot(epochs, val_loss, 'r', label='Validation Loss')
+plt.title('Training vs Validation Loss')
+plt.xlabel('epoch')
+plt.ylabel('Loss')
+plt.legend(loc='best')
+plt.show()
 
 
 ########################################
-# Save Model - HDF5 형식 
+# 5. Save Model - HDF5 형식 
 ########################################
-model.save('keras_model_iris.h5')
+
+model.save('C:/Users/Soo/Documents/GitHub/BigdataGroupProject/files/new_model')
 print('model saved...')
 
 

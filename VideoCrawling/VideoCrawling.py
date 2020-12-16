@@ -40,12 +40,12 @@ def scroll_down():
     after_click = False 
     
     while True : 
-        print(f"스크롤 다운 {scroll_down}")
-        wd.execute_script("window.scrollTo(0,document_body.scrollHeight);")
+        print(f"스크롤 다운 {scroll_count}")
+        wd.execute_script("window.scrollTo(0,document.body.scrollHeight);")
         scroll_count += 1 
         time.sleep(1) # 대기
         
-        new_height = wd.execute_script("return document.bodt.scrollHeight")
+        new_height = wd.execute_script("return document.body.scrollHeight")
         
         
         if last_heigt == new_height: # scroll down이 실행되지 않았다

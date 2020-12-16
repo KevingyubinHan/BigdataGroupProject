@@ -2,7 +2,6 @@
 """
 Created on Sun Dec 13 20:11:11 2020
 
-@author: Soo
 """
 
 import dlib # face detection/face landmark

@@ -9,7 +9,7 @@ Modeling.py
 5. Save
 """
 from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import Conv2D, MaxPool2D, Flatten, Dropout, Dense, BatchNormalization
+from tensorflow.keras.layers import Conv2D, MaxPool2D, Flatten, Dropout, Dense
 from tensorflow.keras import Sequential
 from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.preprocessing.image import ImageDataGenerator

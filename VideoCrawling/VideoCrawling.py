@@ -54,7 +54,8 @@ def scroll_down():
             
             else:
                 try :
-                more_button = wd.find_element_by_xpath('//*[@id="islm"]/div/div/div/div/div[5]/input)
+                more_button = wd.find_element_by_xpath('//*[@id="islm"]/div/div/div/div/div[5]/input')
+                
                 
                 if more_button.is_displayed():
                     more_button.click()
@@ -116,14 +117,14 @@ def scraping(dir_name,query):
     global scrapped_count
     
     url = f"https://www.google.com/search?q={query}&tbm=isch&ved=2ahUKEwi4pYDrptHtAhVKAKYKHbfJA6gQ2-cCegQIABAA&oq=sea&gs_lcp=CgNpbWcQAzIFCAAQsQMyAggAMgUIABCxAzICCAAyAggAMgUIABCxAzICCAAyAggAMggIABCxAxCDATICCABQ1w5Y9hBgwhRoAHAAeACAAXyIAeMCkgEDMC4zmAEAoAEBqgELZ3dzLXdpei1pbWfAAQE&sclient=img&ei=nFzZX7jnEsqAmAW3k4_ACg&bih=721&biw=1280"
+    print(url)
     wd.get(url)
     wd.maximize_window()
     
     scroll_down() # 스크롤 다운
     
     div = wd.find_element_by_xpath('//*[@id="islrg"]/div[1]')
-    img_list = div.find_elements_by_css_selector('.rg_i Q4LuWd')
-    
+    img_list = div.find_element_by_xpath('//*[@id="islrg"]/div[1]/div[1]/a[1]/div[1]/img')
     
     for index, img in enumerate(img_list):
         try:
@@ -191,5 +192,5 @@ print(f"{dir_name}디렉토리 생성")
     wd.maximize_window()
 scroll_down()
 scraping(dir_name, query)
-filter_and_remove(dir_name,query,filter_size)
+filter_and_remove(dir_name,query,400)
 

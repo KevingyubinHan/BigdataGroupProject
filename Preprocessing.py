@@ -23,7 +23,7 @@ predictor = base_dir + "shape_predictor_68_face_landmarks.dat"
 # hog 얼굴 인식기(알고리즘)
 face_detector = dlib.get_frontal_face_detector()
 
-# 68 landmark 인식기 
+# 68 landmark 인식기
 face_68_landmark = dlib.shape_predictor(predictor)
 
 

@@ -182,11 +182,12 @@ def scraping(dir_name,query):
   
 
 
-# driver 홈페이지 접근
+# driver 홈페이지 접근 (각자 드라이버 path설정)
 wd = webdriver.Chrome("/Users/Han/Download2/chromedriver",options=chrome_options)
 
 scrapped_count = 0 # 갯수 초기화
-path = "/Users/Han/Download2/BigdataGroupProject/BigdataGroupProject/images/"
+# 이미지 저장 path 설정 
+path = "/Users/Han/Download2/BigdataGroupProject/BigdataGroupProject/images/" 
 query = input("검색어 입력 : ")
 
 dir_name = path + query

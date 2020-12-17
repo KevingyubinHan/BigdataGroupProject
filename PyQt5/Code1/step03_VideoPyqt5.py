@@ -37,7 +37,8 @@ def stop():
     global running
     running = False
     print("stoped..")
-
+    
+# threading으로 실시간 반영
 def start():
     global running
     running = True
@@ -53,9 +54,8 @@ app = QtWidgets.QApplication([])
 win = QtWidgets.QWidget()
 vbox = QtWidgets.QVBoxLayout()
 label = QtWidgets.QLabel()
-btn_start = QtWidgets.QPushButton("Camera On")
-# 조건을 걸어서 스탑
-btn_stop = QtWidgets.QPushButton("Camera Off")
+btn_start = QtWidgets.QPushButton("Test Start")
+btn_stop = QtWidgets.QPushButton("Exit")
 vbox.addWidget(label)
 vbox.addWidget(btn_start)
 vbox.addWidget(btn_stop)

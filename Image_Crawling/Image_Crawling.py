@@ -178,7 +178,7 @@ def scraping(dir_name,query):
     wd.quit()
     
         
-    
+
 
 
 # driver 홈페이지 접근 (각자 드라이버 path설정)
@@ -195,4 +195,13 @@ print(f"{dir_name}디렉토리 생성")
 
 scraping(dir_name, query)
 filter_and_remove(dir_name,query,400)
+
+
+
+
+
+
+
+
+
 

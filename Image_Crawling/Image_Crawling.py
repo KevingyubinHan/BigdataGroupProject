@@ -179,7 +179,7 @@ def scraping(dir_name,query):
     
         
     
-  
+
 
 # driver 홈페이지 접근 (각자 드라이버 path설정)
 wd = webdriver.Chrome("/Users/Han/Download2/chromedriver",options=chrome_options)

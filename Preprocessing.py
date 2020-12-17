@@ -2,7 +2,6 @@
 """
 Created on Sun Dec 13 20:11:11 2020
 
-@author: Soo
 """
 
 import dlib # face detection/face landmark
@@ -92,12 +91,23 @@ image_reshape = imageReshape()
 print(image_reshape.shape) # (1, 48, 48, 1) 
 
 import matplotlib.pyplot as plt
-    
-for i in range(image_reshape.shape[0]) :
-    img = image_reshape[i]
-    plt.imshow(img)
-    plt.show()
-    
-    io.imsave(path_reshaped() + str(i+1) + "_reshape" + ".jpg", img)
 
+img = image_reshape[0]
+plt.imshow(img)
 
+# Test : 데이터 입력 가능한지 
+from tensorflow.keras.models import load_model
+from skimage import io
+import os
+
+os.chdir("C:/ITWILL/AI_Interview_App/Scripts")
+
+model_original = load_model('files/emotion_model.hdf5', compile=False)
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+gray2 = gray.reshape(1, 48, 48, 1)  # input shape 중요
+gray3 = gray2.astype("float") / 255.0
+
+preds = model_original.predict(gray3)
+print(preds)
+print(preds.max())
+EMOTIONS = ["Angry", "Disgusting", "Fearful", "Happy", "Sad", "Surprising", "Neutral"]

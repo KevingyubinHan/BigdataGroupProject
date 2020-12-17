@@ -9,10 +9,11 @@ Modeling.py
 5. Save
 """
 from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import Conv2D, MaxPool2D, Flatten, Dropout, Dense, BatchNormalization
+from tensorflow.keras.layers import Conv2D, MaxPool2D, Flatten, Dropout, Dense
 from tensorflow.keras import Sequential
 from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 
 ####################
@@ -61,15 +62,19 @@ model.add(Flatten())
 
 ### (6) Fully Connected Layer_01
 model.add(Dense(14, activation = 'relu'))
+model.add(Dropout(0.2))
 
 ### (7) Fully Connected Layer_01
 model.add(Dense(21, activation = 'relu'))
+model.add(Dropout(0.2))
 
 ### (8) Fully Connected Layer_01
 model.add(Dense(14, activation = 'relu'))
+model.add(Dropout(0.2))
 
 ### (9) Fully Connected Layer_02 - output layer
 model.add(Dense(7, activation = 'sigmoid'))
+model.add(Dropout(0.2))
 
 ## 3) Model Layer 확인
 model.summary()
@@ -119,12 +124,15 @@ validation_generator = val_data.flow_from_directory(
         class_mode='categorical')
 
 ## 4) Model Training
+callback = EarlyStopping(monitor='val_loss', patience=7)
+
 model_fit = model.fit_generator(
           train_generator, 
           steps_per_epoch=100, 
           epochs=30, # 30 epochs()
           validation_data=validation_generator,
-          validation_steps=50) 
+          validation_steps=50,
+          callbacks=[callback]) 
 
 
 ######################

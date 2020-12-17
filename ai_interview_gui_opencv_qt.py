@@ -91,17 +91,15 @@ class MyWidget(QWidget):
 
 
     def start_cam(self): # cam 시작
-        '''global running # global 변수 선언
+        global running # global 변수 선언
         running = True
         th = threading.Thread(target=self.run)
-        th.start()'''
-        pass
+        th.start()
 
 
     def stop_cam(self): # cam 일시정지
-        '''global running # global 변수 선언
-        running = False'''
-        pass
+        global running # global 변수 선언
+        running = False
 
 
 if __name__ == '__main__':

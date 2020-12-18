@@ -90,32 +90,10 @@ def click_and_save(dir_name,index,img, img_list_length):
         pass
     except ElementClickInterceptedException as e:
         print(e)
-        wd.execute_script("window.scrollTo(0,window.scrollY + 100")
-        wd.sleep(1)
-        click_and_save(dir_name, index, img,len(img_list))
-        
-    
-# filter_and_remove : 일정 해상도 이하이거나 손상된 이미지 제거
-def filter_and_remove(dir_name,query,filter_size):
-    filtered_count = 0
-    
-    for index, file_name in enumerate(os.listdir(dir_name)):
-        file_path = os.path.join(dir_name,file_name)
-        img = Image.open(file_path)
-        try:
-            if img.width < filter_size and img.height < filter_size :
-                img.close()
-                os.remove(file_path)
-                print(f"{index} 이미지 제거")
-                filtered_count += 1
-        except OSError as e:
-            print(e)
-            os.remove(file_path)
-            filtered_count += 1
-    print(f"이미지 제거 개수 : {filtered_count}/{scrapped_count}")
-        
-    
-        
+        wd.execute_script("window.scrollTo(0,window.scrollY + 100)")
+        time.sleep(1)
+        click_and_save(dir_name, index, img,img_list_length)
+  
         
         
 # scraping 함수 정의 : 구글 이미지 스크래핑 함수
@@ -140,14 +118,14 @@ def scraping(dir_name,query):
             
         except ElementClickInterceptedException as e:
             print(e)
-            wd.execute_script("window.scrollTo(0,window.scrollY + 100")
-            wd.sleep(1)
+            wd.execute_script("window.scrollTo(0,window.scrollY + 100)")
+            time.sleep(1)
             click_and_save(dir_name, index, img,len(img_list))
         
         except NoSuchElementException as e:
             print(e)
-            wd.execute_script("window.scrollTo(0,window.scrollY + 100")
-            wd.sleep(1)
+            wd.execute_script("window.scrollTo(0,window.scrollY + 100)")
+            time.sleep(1)
             click_and_save(dir_name, index, img,len(img_list))
         
         except ConnectionRefusedError as e:
@@ -194,7 +172,6 @@ os.makedirs(dir_name)
 print(f"{dir_name}디렉토리 생성")
 
 scraping(dir_name, query)
-filter_and_remove(dir_name,query,400)
 
 
 

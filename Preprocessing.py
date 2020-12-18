@@ -4,21 +4,22 @@ Created on Sun Dec 13 20:11:11 2020
 
 """
 
-import dlib # face detection/face landmark
 from skimage import io # image read/save
 from glob import glob # dir 패턴검색(*jpg)
-import cv2
 from PIL import Image # image file read
 import numpy as np
+import dlib # face detection/face landmark
+import cv2
+
 
 # 경로 지정
-base_dir = 'C:/ITWILL/AI_Interview_App/Data/'
+base_dir = 'C:/Users/Soo/Documents/GitHub/BigdataGroupProject/'
 path_raw = base_dir + "Raw" # raw image 위치 
 path_cropped = base_dir + "Cropped" # cropped image 저장 위치
 path_reshaped = base_dir + "Reshaped"
 
 # 68 landmark 학습 data
-predictor = base_dir + "shape_predictor_68_face_landmarks.dat"
+predictor = base_dir + "/files/shape_predictor_68_face_landmarks.dat"
 
 # hog 얼굴 인식기(알고리즘)
 face_detector = dlib.get_frontal_face_detector()

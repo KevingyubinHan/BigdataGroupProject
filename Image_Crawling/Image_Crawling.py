@@ -173,11 +173,7 @@ print(f"{dir_name}디렉토리 생성")
 
 scraping(dir_name, query)
 
-
-
-
-
-
+wd.quit()
 
 
 

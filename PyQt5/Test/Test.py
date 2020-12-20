@@ -4,6 +4,7 @@ Created on Thu Dec 17 13:15:17 2020
 
 @author: Swan
 """
+import cv2
 
 def faceDetect():
     eye_detect = False

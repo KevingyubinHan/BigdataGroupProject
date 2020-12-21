@@ -28,7 +28,7 @@ import tensorflow as tf
 
 # Face detection XML load and trained model loading
 face_detection = cv2.CascadeClassifier('files/haarcascade_frontalface_default.xml')
-emotion_classifier = load_model('files/emotion_model.hdf5', compile=False)
+emotion_classifier = load_model('C:/Users/Swan/Documents/GitHub/BigdataGroupProject/PyQt5/final/ai_interview_model.hdf5', compile=False)
 EMOTIONS = ["Angry", "Disgusting", "Fearful", "Happy", "Sad", "Surprising", "Neutral"]
 
 

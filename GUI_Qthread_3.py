@@ -191,7 +191,7 @@ class MyWidget(QWidget):
             self.th.start()
 
             self.th_emotion = Worker2() # 감정 인식 thread
-            self.th_emotion.emotion_value.connect(self.set_lbls_emotions)
+            self.th_emotion.emotion_value.connect(self.set_lbls_probs)
             self.th_emotion.start()
 
             self.btn_toggle.setText('Pause')

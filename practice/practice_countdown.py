@@ -44,28 +44,28 @@ class Widget(QWidget):
 
     def showTime(self):
         if self.flag:
-            self.count -= 1
+            self.count = self.count.addSecs(-1)
 
-            if self.count == 0:
+            text = self.count.toString('hh:mm:ss')
+            self.label.setText(text)
+
+            if self.count == QTime(0,0,0):
                 self.flag = False
                 self.label.setText("countdown")
 
-        if self.flag:
-            text = str(self.count)
-            self.label.setText(text)
-
     def get_seconds(self):
         self.flag = False
-        second, done = QInputDialog.getInt(self, 'Seconds', 'Enter Seconds:')
+
+        seconds, done = QInputDialog.getInt(self, 'Countdown', '초를 입력하세요.', min=1)
 
         if done:
-            self.count = second
-            self.label.setText(str(second))
+            self.count = QTime(0, 0, seconds)
+            self.label.setText(self.count.toString('hh:mm:ss'))
 
     def start_action(self):
         self.flag = True
 
-        if self.count == 0:
+        if self.count == QTime(0,0,0):
             self.flag = False
 
     def pause_action(self):
@@ -73,7 +73,7 @@ class Widget(QWidget):
 
     def reset_action(self):
         self.start = False
-        self.count = 0
+        self.count = QTime(0,0,0)
         self.label.setText("//TIMER//")
 
 

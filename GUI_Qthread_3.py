@@ -30,9 +30,11 @@ emotion_classifier = load_model('files/emotion_model.hdf5', compile=False)
 EMOTIONS = ["Angry", "Disgusting", "Fearful", "Happy", "Sad", "Surprising", "Neutral"]
 
 
-# 실시간 camera 영상을 받아오는 thread
+# thread
 class Worker(QThread):
     changePixmap = pyqtSignal(QImage)
+    emotion_value = pyqtSignal(list)
+
     running = True # thread가 현재 run 중인지 판별하는 변수 선언
 
     def run(self):
@@ -48,61 +50,43 @@ class Worker(QThread):
                 p = qt_img.scaled(640, 480, Qt.KeepAspectRatio) # 화면비 scaling
                 self.changePixmap.emit(p)
 
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # color: gray
+                # Face detection in frame
+                faces = face_detection.detectMultiScale(gray,
+                                                        scaleFactor=1.1,
+                                                        minNeighbors=5,
+                                                        minSize=(30, 30))
+
+                # Perform emotion recognition only when face is detected
+                if len(faces) > 0:
+                    # For the largest image
+                    face = sorted(faces, reverse=True, key=lambda x: (x[2] - x[0]) * (x[3] - x[1]))[0]
+                    (fX, fY, fW, fH) = face
+                    # Resize the image to 48x48 for neural network
+                    roi = gray[fY:fY + fH, fX:fX + fW]
+                    roi = cv2.resize(roi, (48, 48))
+                    roi = roi.astype("float") / 255.0
+                    roi = img_to_array(roi)
+                    roi = np.expand_dims(roi, axis=0)
+
+                    # Emotion predict
+                    preds = emotion_classifier.predict(roi)[0]  # 감정 분류 인식 percentage
+                    emotion_probability = np.max(preds)
+                    label = EMOTIONS[preds.argmax()]
+
+                    self.emotion_value.emit(preds)
+
             else:
                 message = QMessageBox.about(self, 'Error', 'Cannot read frame.')
                 break
 
-        camera.release()  # opencv cam 끄기
-
-    def stop(self):
-        self.running = False
-        self.quit()
-
-
-# 감정 인식 thread
-class Worker2(QThread):
-    emotion_value = pyqtSignal(list)
-    running = True  # thread가 현재 run 중인지 판별하는 변수 선언
-
-    def run(self):
-        camera = cv2.VideoCapture(0)  # opencv cam 켜기
-
-        while self.running:
-            ret, frame = camera.read()  # Capture image from camera
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-            # Face detection in frame
-            faces = face_detection.detectMultiScale(gray,
-                                                    scaleFactor=1.1,
-                                                    minNeighbors=5,
-                                                    minSize=(30, 30))
-
-            # Perform emotion recognition only when face is detected
-            if len(faces) > 0:
-                # For the largest image
-                face = sorted(faces, reverse=True, key=lambda x: (x[2] - x[0]) * (x[3] - x[1]))[0]
-                (fX, fY, fW, fH) = face
-                # Resize the image to 48x48 for neural network
-                roi = gray[fY:fY + fH, fX:fX + fW]
-                roi = cv2.resize(roi, (48, 48))
-                roi = roi.astype("float") / 255.0
-                roi = img_to_array(roi)
-                roi = np.expand_dims(roi, axis=0)
-
-                # Emotion predict
-                preds = emotion_classifier.predict(roi)[0] # 감정 분류 인식 percentage
-                emotion_probability = np.max(preds)
-                label = EMOTIONS[preds.argmax()]
-
-                self.emotion_value.emit(preds)
-
-        # 종료 조건 걸기
-        # q to quit
+            # 종료 조건 걸기
+            # q to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
         camera.release()  # opencv cam 끄기
-    
+
     def stop(self):
         self.running = False
         self.quit()
@@ -172,27 +156,22 @@ class MyWidget(QWidget):
         vbox.addLayout(hbox)
         self.setLayout(vbox)
 
-        self.th = Worker() # 실시간 cam 영상 받아오는 thread
-        self.th_emotion = Worker2() # 감정 인식 thread
+        self.th = Worker() # thread
 
     @pyqtSlot()
     def onButtonClick(self): # 시작/일시정지 시 가동할 기능
         if self.th.isRunning():
             self.timer.stop()
             self.th.stop()
-            self.th_emotion.stop()
             self.btn_toggle.setText('Start your AI interview')
 
         else:
             self.timer.start(1000) # timer 1 sec 간격
 
-            self.th = Worker() # 실시간 cam thread
+            self.th = Worker() # thread
             self.th.changePixmap.connect(self.set_image)
+            self.th.emotion_value.connect(self.set_lbls_probs)
             self.th.start()
-
-            self.th_emotion = Worker2() # 감정 인식 thread
-            self.th_emotion.emotion_value.connect(self.set_lbls_probs)
-            self.th_emotion.start()
 
             self.btn_toggle.setText('Pause')
 

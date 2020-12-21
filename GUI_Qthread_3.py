@@ -21,13 +21,11 @@ from PyQt5.QtCore import QThread, Qt, pyqtSignal, pyqtSlot, QTime, QTimer
 # Download Face detection XML
 !curl - L - o. / files / haarcascade_frontalface_default.xml
 https: // raw.githubusercontent.com / opencv / opencv / master / data / haarcascades / haarcascade_frontalface_default.xml
-# Download emotion trained data
-!curl - L - o. / files / emotion_model.hdf5
-https: // mechasolution.vn / source / blog / AI - tutorial / Emotion_Recognition / emotion_model.hdf5'''
+'''
 
 # Face detection XML load and trained model loading
 face_detection = cv2.CascadeClassifier('files/haarcascade_frontalface_default.xml')
-emotion_classifier = load_model('files/emotion_model.hdf5', compile=False)
+emotion_classifier = load_model('files/ai_interview_model.hdf5', compile=False)
 EMOTIONS = ["Angry", "Disgusting", "Fearful", "Happy", "Sad", "Surprising", "Neutral"]
 
 
@@ -51,6 +49,7 @@ class Worker(QThread):
 
             else:
                 message = QMessageBox.about(self, 'Error', 'Cannot read frame.')
+                self.running = False
                 break
 
         camera.release()  # opencv cam 끄기
@@ -94,7 +93,13 @@ class Worker2(QThread):
                 preds = emotion_classifier.predict(roi)[0]  # 감정 분류 인식 percentage
                 emotion_probability = np.max(preds)
                 label = EMOTIONS[preds.argmax()]
+
                 self.emotion_value.emit(preds)
+
+            # q to quit
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                self.running = False
+                break
 
         camera.release()  # opencv cam 끄기
 
@@ -173,22 +178,22 @@ class MyWidget(QWidget):
     @pyqtSlot()
     def onButtonClick(self):
         if self.th.isRunning():
-            self.timer.stop()
-            self.th_emotion.stop()
             self.th.stop()
+            self.th_emotion.stop()
+
+            self.timer.stop()
             self.btn_toggle.setText('Start your AI interview')
 
         else:
-            self.timer.start(1000)
-
+            self.th = Worker()
+            self.th.changePixmap.connect(self.set_image)
+            self.th.start()
+            
             self.th_emotion = Worker2()
             self.th_emotion.emotion_value.connect(self.set_lbls_emotions)
             self.th_emotion.start()
 
-            self.th = Worker()
-            self.th.changePixmap.connect(self.set_image)
-            self.th.start()
-
+            self.timer.start(1000)
             self.btn_toggle.setText('Pause')
 
     @pyqtSlot(QImage)

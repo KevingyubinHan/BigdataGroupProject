@@ -30,9 +30,8 @@ class Widget(QWidget):
         reset_button = QPushButton("Reset", self)
         reset_button.clicked.connect(self.reset_action)
 
-        timer = QTimer(self)
-        timer.timeout.connect(self.showTime)
-        timer.start(1000)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.showTime)
 
         vbox = QVBoxLayout()
         vbox.addWidget(button)
@@ -60,10 +59,12 @@ class Widget(QWidget):
 
         if done:
             self.count = QTime(0, 0, seconds)
-            self.label.setText(self.count.toString('hh:mm:ss'))
+            text = self.count.toString('hh:mm:ss')
+            self.label.setText(text)
 
     def start_action(self):
         self.flag = True
+        self.timer.start(1000)
 
         if self.count == QTime(0,0,0):
             self.flag = False

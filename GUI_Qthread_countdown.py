@@ -32,12 +32,11 @@ EMOTIONS = ["Angry", "Disgusting", "Fearful", "Happy", "Sad", "Surprising", "Neu
 # 실시간 camera 영상을 받아오는 thread
 class Worker(QThread):
     changePixmap = pyqtSignal(QImage)
-    running = True  # thread가 현재 run 중인지 판별하는 변수 선언
 
     def run(self):
         camera = cv2.VideoCapture(0)  # opencv cam 켜기
 
-        while self.running:
+        while True:
             ret, frame = camera.read()  # Capture image from camera
 
             if ret:
@@ -56,19 +55,17 @@ class Worker(QThread):
         camera.release()  # opencv cam 끄기
 
     def stop(self):
-        self.running = False
         self.quit()
 
 
 # 감정 인식 thread
 class Worker2(QThread):
     emotion_value = pyqtSignal(list)
-    running = True  # thread가 현재 run 중인지 판별하는 변수 선언
 
     def run(self):
         camera = cv2.VideoCapture(0)  # opencv cam 켜기
 
-        while self.running:
+        while True:
             ret, frame = camera.read()  # Capture image from camera
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -104,13 +101,11 @@ class Worker2(QThread):
 
             # q to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                self.running = False
                 break
 
         camera.release()  # opencv cam 끄기
 
     def stop(self):
-        self.running = False
         self.quit()
 
 

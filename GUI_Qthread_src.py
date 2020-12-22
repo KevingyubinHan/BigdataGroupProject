@@ -5,6 +5,7 @@ import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
 
+#https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
 # Qthread
 class VideoThread(QThread):
@@ -38,7 +39,7 @@ class App(QWidget):
         self.display_height = 480
         # create the label that holds the image
         self.image_label = QLabel(self)
-        self.image_label.resize(self.disply_width, self.display_height)
+        self.image_label.resize(self.display_width, self.display_height)
         # create a text label
         self.textLabel = QLabel('Webcam')
 
@@ -72,7 +73,7 @@ class App(QWidget):
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
 
 

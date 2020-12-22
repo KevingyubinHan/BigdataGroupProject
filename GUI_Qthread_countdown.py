@@ -196,7 +196,7 @@ class MyWidget(QWidget):
             self.th.start()
 
             self.th_emotion = Worker2()
-            self.th_emotion.emotion_value.connect(self.set_lbls_emotions)
+            self.th_emotion.emotion_value.connect(self.set_lbls_probs)
             self.th_emotion.start()
 
             self.flag = True
@@ -212,9 +212,9 @@ class MyWidget(QWidget):
         self.lbl_cam.setPixmap(QPixmap.fromImage(image))
 
     @pyqtSlot(list)
-    def set_lbls_emotions(self, emotion_value_list):
+    def set_lbls_probs(self, emotion_value_list):
         for i in range(len(EMOTIONS)):
-            self.lbls_emotions[i].setText(str(int(emotion_value_list[i] * 100)))
+            self.lbls_probs[i].setText(str(int(emotion_value_list[i] * 100)))
 
     def get_seconds(self):
         self.flag = False

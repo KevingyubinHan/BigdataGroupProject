@@ -95,6 +95,11 @@ class Worker2(QThread):
                 emotion_probability = np.max(preds)
                 label = EMOTIONS[preds.argmax()]
 
+                # print probabilities in opencv and py console
+                for (i, (emotion, prob)) in enumerate(zip(EMOTIONS, preds)):
+                    text = "{}: {:.2f}%".format(emotion, prob * 100)
+                    print(text)
+
                 self.emotion_value.emit(preds)
 
             # q to quit

@@ -12,10 +12,10 @@ import numpy as np
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QMessageBox, QVBoxLayout, QHBoxLayout, QInputDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QMessageBox, QVBoxLayout, \
+    QHBoxLayout, QInputDialog
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import QThread, Qt, pyqtSignal, pyqtSlot, QTime, QTimer
-
 
 '''!if not exist "./files" mkdir files
 # Download Face detection XML
@@ -33,10 +33,13 @@ EMOTIONS = ["Angry", "Disgusting", "Fearful", "Happy", "Sad", "Surprising", "Neu
 class Worker(QThread):
     changePixmap = pyqtSignal(QImage)
 
+    def __init__(self):
+        super().__init__()
+        self._run_flag = True
+
     def run(self):
         camera = cv2.VideoCapture(0)  # opencv cam 켜기
-
-        while True:
+        while self._run_flag:
             ret, frame = camera.read()  # Capture image from camera
 
             if ret:
@@ -47,25 +50,25 @@ class Worker(QThread):
 
                 self.changePixmap.emit(p)
 
-            else:
-                message = QMessageBox.about(self, 'Error', 'Cannot read frame.')
-                self.running = False
-                break
-
-        camera.release()  # opencv cam 끄기
+        camera.release()
 
     def stop(self):
-        self.quit()
+        self._run_flag = False
+        self.wait()
 
 
 # 감정 인식 thread
 class Worker2(QThread):
-    emotion_value = pyqtSignal(list)
+    emotion_value = pyqtSignal(np.array)
+
+    def __init__(self):
+        super().__init__()
+        self._run_flag = True
 
     def run(self):
         camera = cv2.VideoCapture(0)  # opencv cam 켜기
 
-        while True:
+        while self._run_flag:
             ret, frame = camera.read()  # Capture image from camera
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -89,58 +92,25 @@ class Worker2(QThread):
 
                 # Emotion predict
                 preds = emotion_classifier.predict(roi)[0]  # 감정 분류 인식 percentage
-                emotion_probability = np.max(preds)
-                label = EMOTIONS[preds.argmax()]
-
-                # print probabilities in opencv and py console
-                for (i, (emotion, prob)) in enumerate(zip(EMOTIONS, preds)):
-                    text = "{}: {:.2f}%".format(emotion, prob * 100)
-                    print(text)
 
                 self.emotion_value.emit(preds)
-
-            # q to quit
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
 
         camera.release()  # opencv cam 끄기
 
     def stop(self):
-        self.quit()
-
-
-# window
-class MyApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.initUI()
-
-    def initUI(self):
-        widget = MyWidget()
-        self.setCentralWidget(widget)
-
-        self.setWindowTitle('AI interview program')
-
-    def closeEvent(self, event):
-        reply = QMessageBox.question(self, 'Quit', 'Do you want to quit AI interview?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()
+        self._run_flag = False
+        self.wait()
 
 
 # widget UI setting
 class MyWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.initUI()
 
-    def initUI(self):
         vbox = QVBoxLayout()  # vertical layout
         hbox = QHBoxLayout()  # horizontal layout
-        subvbox_1 = QVBoxLayout()  # vertical layout
-        subvbox_2 = QVBoxLayout()  # vertical layout
+        vbox2 = QVBoxLayout()
+        vbox3 = QVBoxLayout()
 
         self.lbl_cam = QLabel(self)  # cam 영상이 들어갈 label 할당
         self.lbl_cam.resize(640, 480)  # label resize(cam)
@@ -150,71 +120,46 @@ class MyWidget(QWidget):
         for i in range(len(EMOTIONS)):  # 감정 이름이 들어갈 label 할당
             self.lbls_emotions.append(QLabel())
             self.lbls_emotions[i].setText(EMOTIONS[i])
-            subvbox_1.addWidget(self.lbls_emotions[i])
+            vbox2.addWidget(self.lbls_emotions[i])
 
         self.lbls_probs = []
         for i in range(len(EMOTIONS)):  # 감정별 확률이 들어갈 label 할당
             self.lbls_probs.append(QLabel())
-            subvbox_2.addWidget(self.lbls_probs[i])
+            vbox3.addWidget(self.lbls_probs[i])
 
         self.lbl_timer = QLabel('Countdown')  # timer가 들어갈 label 할당
-        self.flag = False # timer가 작동중인지 판별할 flag
+        self.flag = False  # timer가 작동중인지 판별할 flag
         self.count = QTime(0, 0, 0)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.showTime)
         vbox.addWidget(self.lbl_timer)
 
-        set_countdown = QPushButton("Set Countdown", self)
-        set_countdown.clicked.connect(self.get_seconds)
-        vbox.addWidget(set_countdown)
+        self.btn_countdown = QPushButton("Set Countdown", self)
+        self.btn_countdown.clicked.connect(self.get_seconds)
+        vbox.addWidget(self.btn_countdown)
 
-        self.btn_toggle = QPushButton(self)  # 시작/일시정지 button 할당
-        self.btn_toggle.setText('Start your AI interview')
-        self.btn_toggle.clicked.connect(self.onButtonClick)  # start/pause button
-        vbox.addWidget(self.btn_toggle)
+        self.btn_start = QPushButton(self)  # 시작 button 할당
+        self.btn_start.setText('Start')
+        self.btn_start.clicked.connect(self.click_start)
+        vbox.addWidget(self.btn_start)
 
-        hbox.addLayout(subvbox_1)
-        hbox.addLayout(subvbox_2)
+        self.btn_pause = QPushButton(self)  # 일시정지 button 할당
+        self.btn_pause.setText('Pause')
+        self.btn_pause.clicked.connect(self.click_pause)
+        vbox.addWidget(self.btn_pause)
+
+        hbox.addLayout(vbox2)
+        hbox.addLayout(vbox3)
         vbox.addLayout(hbox)
         self.setLayout(vbox)
 
         self.th = Worker()  # 실시간 cam 영상 받아오는 thread
+        self.th.changePixmap.connect(self.set_image)
+        self.th.start() # auto start
+
         self.th_emotion = Worker2()  # 감정 인식 thread
-
-    @pyqtSlot()
-    def onButtonClick(self):
-        if self.th.isRunning():
-            self.th.stop()
-            self.th_emotion.stop()
-            self.flag = False
-            #self.timer.stop()
-            self.btn_toggle.setText('Start your AI interview')
-
-        else:
-            self.th = Worker()
-            self.th.changePixmap.connect(self.set_image)
-            self.th.start()
-
-            self.th_emotion = Worker2()
-            self.th_emotion.emotion_value.connect(self.set_lbls_probs)
-            self.th_emotion.start()
-
-            self.flag = True
-            self.timer.start(1000)  # every seconds
-
-            if self.count == QTime(0, 0, 0):
-                self.flag = False
-
-            self.btn_toggle.setText('Pause')
-
-    @pyqtSlot(QImage)
-    def set_image(self, image):
-        self.lbl_cam.setPixmap(QPixmap.fromImage(image))
-
-    @pyqtSlot(list)
-    def set_lbls_probs(self, emotion_value_list):
-        for i in range(len(EMOTIONS)):
-            self.lbls_probs[i].setText(str(int(emotion_value_list[i] * 100)))
+        self.th_emotion.emotion_value.connect(self.set_lbls_probs)
+        self.th_emotion.start() # auto start
 
     def get_seconds(self):
         self.flag = False
@@ -233,9 +178,51 @@ class MyWidget(QWidget):
             text = self.count.toString('hh:mm:ss')
             self.lbl_timer.setText(text)
 
-            if self.count == QTime(0,0,0):
+            if self.count == QTime(0, 0, 0):
                 self.flag = False
                 self.lbl_timer.setText("countdown")
+
+    def click_start(self):
+        self.flag = True
+        self.timer.start(1000)  # every seconds
+
+        if self.count == QTime(0, 0, 0):
+            self.flag = False
+
+    def click_pause(self):
+        self.flag = False
+
+    @pyqtSlot(QImage)
+    def set_image(self, image):
+        self.lbl_cam.setPixmap(QPixmap.fromImage(image))
+
+    @pyqtSlot(np.array)
+    def set_lbls_probs(self, emotion_value):
+        for i in range(len(EMOTIONS)):
+            self.lbls_probs[i].setText(str(int(emotion_value[i] * 100)))
+
+
+# window
+class MyApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        widget = MyWidget()
+        self.setCentralWidget(widget)
+
+        self.setWindowTitle('AI interview program')
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Quit', 'Do you want to quit AI interview?',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.th.stop()
+            self.th_emotion.stop()
+            event.accept()
+        else:
+            event.ignore()
 
 
 if __name__ == '__main__':

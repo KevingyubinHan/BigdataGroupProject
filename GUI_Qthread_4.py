@@ -45,7 +45,7 @@ class MyWidget(QWidget):
         self.display_width = 640
         self.display_height = 480
 
-        self.preds = []
+        self.preds = np.array([0,0,0,0,0,0,0])
 
         vbox = QVBoxLayout()
         hbox = QHBoxLayout()
@@ -64,7 +64,8 @@ class MyWidget(QWidget):
 
         self.lbls_probs = []
         for i in range(len(EMOTIONS)):  # 감정별 확률이 들어갈 label 할당
-            self.lbls_probs.append(QLabel('0'))
+            self.lbls_probs.append(QLabel())
+            self.lbls_probs[i].setText(str(self.preds[i]))
             vbox3.addWidget(self.lbls_probs[i])
 
         hbox.addLayout(vbox2)
@@ -82,9 +83,9 @@ class MyWidget(QWidget):
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
 
-        emotion_value_list = self.detect_emotions(cv_img) #preds
+        emotion_value = self.detect_emotions(cv_img) # preds
         for i in range(len(EMOTIONS)):
-            self.lbls_probs[i].setText(str(int(emotion_value_list[i] * 100)))
+            self.lbls_probs[i].setText(str(int(emotion_value[i] * 100)))
 
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
@@ -113,7 +114,7 @@ class MyWidget(QWidget):
             roi = img_to_array(roi)
             roi = np.expand_dims(roi, axis=0)
 
-            self.preds = emotion_classifier.predict(roi)[0]  # list
+            self.preds = emotion_classifier.predict(roi)[0]  # array
 
         return self.preds
 

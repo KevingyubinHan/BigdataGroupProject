@@ -167,7 +167,13 @@ class MyWidget(QWidget):
         seconds, done = QInputDialog.getInt(self, 'Countdown', '초를 입력하세요.', min=1)
 
         if done:
-            self.count = QTime(0, 0, seconds)
+            if seconds >= 60:
+                minute = int(seconds / 60)
+                self.count = QTime(0, minute, seconds - (minute * 60))
+
+            else:
+                self.count = QTime(0, 0, seconds)
+
             text = self.count.toString('hh:mm:ss')
             self.lbl_timer.setText(text)
             self.btn_start.setEnabled(True)

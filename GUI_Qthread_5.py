@@ -1,7 +1,9 @@
+# GUI_Qthread
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QMessageBox, QVBoxLayout, QHBoxLayout
+import random
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMessageBox, QVBoxLayout, QHBoxLayout, QInputDialog
 from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QTime, QTimer
 
 import numpy as np
 import cv2
@@ -12,6 +14,10 @@ from tensorflow.keras.models import load_model
 face_detection = cv2.CascadeClassifier('files/haarcascade_frontalface_default.xml')
 emotion_classifier = load_model('files/ai_interview_model.hdf5', compile=False)
 EMOTIONS = ["Angry", "Disgusting", "Fearful", "Happy", "Sad", "Surprising", "Neutral"]
+
+# load interview question examples
+question_txt = open('files/InterviewQuestion.txt', 'r', encoding='utf-8')
+question_lines = question_txt.readlines()
 
 
 # Qthread
@@ -77,16 +83,52 @@ class MyWidget(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.setWindowTitle('AI interview program')
+
+        vbox = QVBoxLayout()
         hbox = QHBoxLayout()
+        vbox_2 = QVBoxLayout()
 
         self.image_label = QLabel(self)  # cam->image 들어갈 label 할당
-        self.image_label.resize(self.display_width, self.display_height)
-        hbox.addWidget(self.image_label)
+        self.image_label.resize(640, 480)
+        vbox.addWidget(self.image_label)
 
-        self.preds_label = QLabel(self)
+        self.preds_label = QLabel(self) # emotion preds 들어갈 label 할당
         hbox.addWidget(self.preds_label)
 
-        self.setLayout(hbox)
+        self.btn_question = QPushButton('Set Question')
+        self.btn_question.clicked.connect(self.get_question)
+        vbox_2.addWidget(self.btn_question)
+
+        self.lbl_question = QLabel('Question')
+        vbox_2.addWidget(self.lbl_question)
+
+        self.btn_countdown = QPushButton('Set Countdown')
+        self.btn_countdown.setEnabled(False)
+        self.btn_countdown.clicked.connect(self.get_seconds)
+        vbox_2.addWidget(self.btn_countdown)
+
+        self.lbl_timer = QLabel('Countdown')  # timer가 들어갈 label 할당
+        vbox_2.addWidget(self.lbl_timer)
+
+        self.flag = False  # timer가 작동중인지 판별할 flag
+        self.count = QTime(0, 0, 0)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.show_time)
+
+        self.btn_start = QPushButton('Start')  # 시작 button 할당
+        self.btn_start.setEnabled(False)
+        self.btn_start.clicked.connect(self.click_start)
+        vbox_2.addWidget(self.btn_start)
+
+        self.btn_pause = QPushButton('Pause')  # 일시정지 button 할당
+        self.btn_pause.setEnabled(False)
+        self.btn_pause.clicked.connect(self.click_pause)
+        vbox_2.addWidget(self.btn_pause)
+
+        hbox.addLayout(vbox_2)
+        vbox.addLayout(hbox)
+        self.setLayout(vbox)
 
         self.thread = VideoThread() # thread
         self.thread.change_pixmap_signal.connect(self.update_image)
@@ -96,26 +138,69 @@ class MyWidget(QWidget):
     @pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
-        qt_img = self.convert_cv_qt(cv_img)
+        qt_img = self.convert_cv_qt(cv_img, 640, 480)
         self.image_label.setPixmap(qt_img)
 
     @pyqtSlot(np.ndarray)
     def update_preds(self, cv_canvas):
-        qt_img = self.convert_cv_qt(cv_canvas) # 수정 필요
+        qt_img = self.convert_cv_qt(cv_canvas, 300, 300)
         self.preds_label.setPixmap(qt_img)
 
-    def convert_cv_qt(self, cv_img):
+    def convert_cv_qt(self, cv_img, width, height):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         converted_img = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        p = converted_img.scaled(640, 480, Qt.KeepAspectRatio)
+        p = converted_img.scaled(width, height, Qt.KeepAspectRatio)
 
         return QPixmap.fromImage(p)
 
+    def get_question(self):
+        line = random.choice(question_lines)
+        self.lbl_question.setText(line)
+        self.btn_countdown.setEnabled(True)
+
+    def get_seconds(self):
+        self.flag = False
+
+        seconds, done = QInputDialog.getInt(self, 'Countdown', '초를 입력하세요.', min=1)
+
+        if done:
+            self.count = QTime(0, 0, seconds)
+            text = self.count.toString('hh:mm:ss')
+            self.lbl_timer.setText(text)
+            self.btn_start.setEnabled(True)
+            self.btn_pause.setEnabled(False)
+
+    def show_time(self):
+        if self.flag:
+            self.count = self.count.addSecs(-1)
+
+            text = self.count.toString('hh:mm:ss')
+            self.lbl_timer.setText(text)
+
+            if self.count == QTime(0, 0, 0):
+                self.flag = False
+                self.lbl_timer.setText('Countdown')
+                self.btn_start.setEnabled(False)
+                self.btn_pause.setEnabled(False)
+
+    def click_start(self):
+        if not self.flag:
+            self.flag = True
+            self.timer.start(1000)  # every seconds
+            self.btn_start.setEnabled(False)
+            self.btn_pause.setEnabled(True)
+
+    def click_pause(self):
+        if self.flag:
+            self.flag = False
+            self.btn_start.setEnabled(True)
+            self.btn_pause.setEnabled(False)
+
     def closeEvent(self, event):
-        reply = QMessageBox.question(self, 'Quit', 'Do you want to quit AI interview?',
+        reply = QMessageBox.question(self, 'Quit', 'Do you want to quit AI interview program?',
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.thread.stop()

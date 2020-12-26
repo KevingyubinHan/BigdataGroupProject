@@ -16,4 +16,5 @@ setup(
     zipfile = None,
 )
 
-python setup.py 
+import sys
+print(sys.path)

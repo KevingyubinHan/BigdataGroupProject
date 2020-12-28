@@ -1,4 +1,5 @@
 # GUI_Qthread
+
 import sys
 import random
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QMessageBox, QVBoxLayout, QHBoxLayout, QInputDialog
@@ -55,7 +56,7 @@ class VideoThread(QThread):
                 preds = emotion_classifier.predict(roi)[0]  # array
                 emotion_probability = np.max(preds)
                 label = EMOTIONS[preds.argmax()]
-
+              
                 cv2.putText(frame, label, (fX, fY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
                 cv2.rectangle(frame, (fX, fY), (fX + fW, fY + fH), (0, 0, 255), 2)
 
@@ -68,15 +69,19 @@ class VideoThread(QThread):
 
             self.change_pixmap_signal.emit(frame)
             self.change_preds_signal.emit(canvas)
-
+                
+            key = cv2.waitKey(1) & 0xFF
+            if (preds[3] < 0.5): #happy가 50퍼 이하면 종료 , 대신 첨부터 컴퓨터 화면을 보고 있어야 함.
+                break
+     
         camera.release()
         cv2.destroyAllWindows()
-
+'''
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
         self._run_flag = False
         self.wait()
-
+        '''
 
 # widget
 class MyWidget(QWidget):

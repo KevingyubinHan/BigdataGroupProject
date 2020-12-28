@@ -164,7 +164,7 @@ wd = webdriver.Chrome("/Users/Han/Download2/chromedriver",options=chrome_options
 
 scrapped_count = 0 # 갯수 초기화
 # 이미지 저장 path 설정 
-path = "/Users/Han/Download2/BigdataGroupProject/BigdataGroupProject/images/" 
+path = "/Users/Han/Download2/" 
 query = input("검색어 입력 : ")
 
 dir_name = path + query
